@@ -40,21 +40,21 @@ namespace WebApiCar.Controllers
         public IEnumerable<Car> GetByVendor(string vendor)
         {
             //should be an SQL statement
-            return getCarsFromDB($"select id, vendor, model, price from Car WHERE vendor LIKE '{vendor}'");
+            return getCarsFromDB($"select id, vendor, model, price from Car WHERE vendor LIKE @vendor", ("@vendor", vendor));
         }
 
         [HttpGet(("byVendor/{vendor}/price/{price}"), Name = "GetByVendorAndPrice")]
         public IEnumerable<Car> GetByVendorandPrice(string vendor, int price)
         {
             //shold be an sql statements
-            return getCarsFromDB($"select id, vendor, model, price from Car where vendor='{vendor}' AND price='{price}'");
+            return getCarsFromDB($"select id, vendor, model, price from Car where vendor LIKE @vendor AND price=@price", ("@vendor", vendor), ("@price", price));
         }
 
         [HttpGet(("byPrice/{price}"), Name = "GetByPrice")]
         public IEnumerable<Car> GetByPrice(int price)
         {
             //shold be an sql statements
-            return getCarsFromDB($"select id, vendor, model, price from Car where price='{price}'");
+            return getCarsFromDB($"select id, vendor, model, price from Car where price=@price", ("@price", price));
         }
 
         [HttpGet(("orderByPrice/{order}"), Name = "GetAscendDescendByPrice")]
@@ -75,9 +75,9 @@ namespace WebApiCar.Controllers
             //shold be an sql statements
             List<Car> cars = new List<Car>();
             if (order.ToLower() == "ascending")
-                cars = getCarsFromDB($"select id, vendor, model, price from Car where price='{price}' ORDER BY price ASC");
+                cars = getCarsFromDB($"select id, vendor, model, price from Car where price=@price ORDER BY price ASC", ("@price", price));
             else if (order.ToLower() == "descending")
-                cars = getCarsFromDB($"select id, vendor, model, price from Car where price='{price}' ORDER BY price DESC");
+                cars = getCarsFromDB($"select id, vendor, model, price from Car where price=@price ORDER BY price DESC", ("@price", price));
             return cars;
         }
 
@@ -85,7 +85,7 @@ namespace WebApiCar.Controllers
         [HttpGet("{id}", Name = "Get")]
         public Car Get(int id)
         {
-            return getCarsFromDB($"select id, vendor, model, price from Car Where id={id}")[0];
+            return getCarsFromDB($"select id, vendor, model, price from Car Where id=@id", ("@id", id))[0];
         }
 
         /// <summary>
@@ -118,8 +118,8 @@ namespace WebApiCar.Controllers
         {
             if (id != value.Id)
                 return BadRequest(new {message = "ID mismatch"});
-            string updateCarSql = $"UPDATE Car SET vendor='{value.Vendor}', model='{value.Model}', price='{value.Price}' WHERE id = '{value.Id}'";
-            updateOrDeleteCarFromDB(updateCarSql);
+            string updateCarSql = $"UPDATE Car SET vendor=@vendor, model=@model, price=@price WHERE id=@id";
+            updateOrDeleteCarFromDB(updateCarSql, ("@vendor", value.Vendor), ("@model", value.Model), ("@price", value.Price), ("@id", id));
             return Ok(new {message = "Car Updated"});
         }
 
@@ -128,8 +128,8 @@ namespace WebApiCar.Controllers
         public void Delete(int id)
         {
             //carList.Remove(Get(id));
-            string deleteCarSql = $"DELETE FROM Car WHERE id='{id}'";
-            updateOrDeleteCarFromDB(deleteCarSql);
+            string deleteCarSql = $"DELETE FROM Car WHERE id=@id";
+            updateOrDeleteCarFromDB(deleteCarSql, ("@id", id));
         }
 
        int GetId()
@@ -141,19 +141,23 @@ namespace WebApiCar.Controllers
             return 0;
         }
 
-       private void updateOrDeleteCarFromDB(string sqlQuery)
+       private void updateOrDeleteCarFromDB(string sqlQuery, params (string, object)[] paramList)
        {
            using (SqlConnection databaseConnection = new SqlConnection(conn))
            {
                databaseConnection.Open();
                using (SqlCommand command = new SqlCommand(sqlQuery, databaseConnection))
                {
+                   foreach (var pTuple in paramList)
+                   {
+                       command.Parameters.AddWithValue(pTuple.Item1, pTuple.Item2);
+                   }
                    command.ExecuteNonQuery();
                }
            }
         }
 
-       private List<Car> getCarsFromDB(string sqlQuery)
+       private List<Car> getCarsFromDB(string sqlQuery, params (string, object)[] paramList)
        {
            var carList = new List<Car>();
            using (SqlConnection databaseConnection = new SqlConnection(conn))
@@ -161,6 +165,10 @@ namespace WebApiCar.Controllers
                using (SqlCommand selectCommand = new SqlCommand(sqlQuery, databaseConnection))
                {
                    databaseConnection.Open();
+                   foreach (var pTuple in paramList)
+                   {
+                       selectCommand.Parameters.AddWithValue(pTuple.Item1, pTuple.Item2);
+                   }
                    using (SqlDataReader reader = selectCommand.ExecuteReader())
                    {
                        while (reader.Read())
