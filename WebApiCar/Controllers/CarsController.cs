@@ -96,18 +96,17 @@ namespace WebApiCar.Controllers
         [HttpPost]
         public void Post([FromBody] Car value)
         {
-            string insertCarSql = "insert into car (id,vendor, model, price) values (@id, @vendor, @model, @price)";
+            string insertCarSql = "insert into car (vendor, model, price) values (@vendor, @model, @price)";
             using (SqlConnection databaseconnection = new SqlConnection(conn))
             {
                 databaseconnection.Open();
                 using (SqlCommand insertCommand = new SqlCommand(insertCarSql, databaseconnection))
                 {
-                    insertCommand.Parameters.AddWithValue("@id", value.Id);
                     insertCommand.Parameters.AddWithValue("@vendor", value.Vendor);
                     insertCommand.Parameters.AddWithValue("@model", value.Model);
                     insertCommand.Parameters.AddWithValue("@price", value.Price);
                     int rowaffected = insertCommand.ExecuteNonQuery();
-                    Console.WriteLine($"rows affected: {rowaffected}");
+                    //Console.WriteLine($"rows affected: {rowaffected}");
                 }
                 //    Car newcar = new Car() { Id = GetId(), Model = value.Model, Vendor = value.Vendor, Price = value.Price };
                 //carList.Add(newcar);
