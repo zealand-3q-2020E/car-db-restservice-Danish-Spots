@@ -16,52 +16,23 @@ namespace WebApiCar.Controllers
 
         static string conn = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=CarDB;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
 
-        public static List<Car> carList = new List<Car>()
-        {
-            new Car(){Id = 1,Model="x3",Vendor="Tesla", Price=400000},
-            new Car(){Id = 2,Model="x2",Vendor="Tesla", Price=600000},
-            new Car(){Id = 3,Model="x1",Vendor="Tesla", Price=800000},
-            new Car(){Id = 4,Model="x0",Vendor="Tesla", Price=1400000},
-        };
+        //public static List<Car> carList = new List<Car>()
+        //{
+        //    new Car(){Id = 1,Model="x3",Vendor="Tesla", Price=400000},
+        //    new Car(){Id = 2,Model="x2",Vendor="Tesla", Price=600000},
+        //    new Car(){Id = 3,Model="x1",Vendor="Tesla", Price=800000},
+        //    new Car(){Id = 4,Model="x0",Vendor="Tesla", Price=1400000},
+        //};
 
         /// <summary>
-        /// Method for get all the cars from the static list
+        /// Method to get all the cars from the database
         /// </summary>
         /// <returns>List of cars</returns>
         // GET: api/Cars
         [HttpGet]
         public IEnumerable<Car> Get()
         {
-            var carList = new List<Car>();
-
-            string selectall = "select id, vendor, model, price from Car";
-
-            using (SqlConnection databaseConnection = new SqlConnection(conn))
-            {
-                using (SqlCommand selectCommand = new SqlCommand(selectall, databaseConnection))
-                {
-                    databaseConnection.Open();
-
-                    using (SqlDataReader reader = selectCommand.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            int id = reader.GetInt32(0);
-                            string vendor = reader.GetString(1);
-                            string model = reader.GetString(2);
-                            int price = reader.GetInt32(3);
-
-                            carList.Add(new Car(id,vendor,model,price));
-
-                        }
-
-                    }
-                }
-
-
-                    }
-
-                return carList;
+            return getCarsFromDB("select id, vendor, model, price from Car");
         }
 
         //[Route("/byVendor/{vendor}")]
@@ -69,21 +40,21 @@ namespace WebApiCar.Controllers
         public IEnumerable<Car> GetByVendor(string vendor)
         {
             //should be an SQL statement
-            return carList.Where(x=> x.Vendor == vendor);
+            return getCarsFromDB($"select id, vendor, model, price from Car WHERE vendor LIKE '{vendor}'");
         }
 
         [HttpGet(("byVendor/{vendor}/price/{price}"), Name = "GetByVendorAndPrice")]
         public IEnumerable<Car> GetByVendorandPrice(string vendor, int price)
         {
             //shold be an sql statements
-            return carList.Where(x => x.Vendor == vendor && x.Price == price);
+            return getCarsFromDB($"select id, vendor, model, price from Car where vendor='{vendor}' AND price='{price}'");
         }
 
         // GET: api/Cars/5
         [HttpGet("{id}", Name = "Get")]
         public Car Get(int id)
         {
-            return carList.FirstOrDefault(x => x.Id == id);
+            return getCarsFromDB($"select id, vendor, model, price from Car Where id={id}")[0];
         }
 
         /// <summary>
@@ -121,13 +92,46 @@ namespace WebApiCar.Controllers
         [HttpDelete("{id}")]
         public void Delete(int id)
         {
-            carList.Remove(Get(id));
+            //carList.Remove(Get(id));
         }
 
        int GetId()
         {
-            int max = carList.Max(x => x.Id);
-            return max+1;
+            //int max = carList.Max(x => x.Id);
+            //return max+1;
+            return 0;
+        }
+
+       private List<Car> getCarsFromDB(string sqlQuery)
+       {
+           var carList = new List<Car>();
+
+           string selectall = sqlQuery;
+
+           using (SqlConnection databaseConnection = new SqlConnection(conn))
+           {
+               using (SqlCommand selectCommand = new SqlCommand(selectall, databaseConnection))
+               {
+                   databaseConnection.Open();
+
+                   using (SqlDataReader reader = selectCommand.ExecuteReader())
+                   {
+                       while (reader.Read())
+                       {
+                           int id = reader.GetInt32(0);
+                           string vendor = reader.GetString(1);
+                           string model = reader.GetString(2);
+                           int price = reader.GetInt32(3);
+
+                           carList.Add(new Car(id, vendor, model, price));
+
+                       }
+
+                   }
+               }
+           }
+
+           return carList;
         }
 
     }
