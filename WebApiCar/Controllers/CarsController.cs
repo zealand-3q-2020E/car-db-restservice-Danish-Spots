@@ -105,7 +105,7 @@ namespace WebApiCar.Controllers
                     insertCommand.Parameters.AddWithValue("@vendor", value.Vendor);
                     insertCommand.Parameters.AddWithValue("@model", value.Model);
                     insertCommand.Parameters.AddWithValue("@price", value.Price);
-                    int rowaffected = insertCommand.ExecuteNonQuery();
+                    insertCommand.ExecuteNonQuery();
                     //Console.WriteLine($"rows affected: {rowaffected}");
                 }
                 //    Car newcar = new Car() { Id = GetId(), Model = value.Model, Vendor = value.Vendor, Price = value.Price };
@@ -116,17 +116,29 @@ namespace WebApiCar.Controllers
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] Car value)
         {
+
         }
 
         // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
+        [HttpDelete("deleteById/{id}")]
         public void Delete(int id)
         {
             //carList.Remove(Get(id));
+            string insertCarSql = $"DELETE FROM Car WHERE id='{id}'";
+            using (SqlConnection databaseconnection = new SqlConnection(conn))
+            {
+                databaseconnection.Open();
+                using (SqlCommand deleteCommand = new SqlCommand(insertCarSql, databaseconnection))
+                {
+                    deleteCommand.ExecuteNonQuery();
+                }
+            }
         }
 
        int GetId()
         {
+            //Currently Never Used
+
             //int max = carList.Max(x => x.Id);
             //return max+1;
             return 0;
