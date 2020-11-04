@@ -50,6 +50,37 @@ namespace WebApiCar.Controllers
             return getCarsFromDB($"select id, vendor, model, price from Car where vendor='{vendor}' AND price='{price}'");
         }
 
+        [HttpGet(("byPrice/{price}"), Name = "GetByPrice")]
+        public IEnumerable<Car> GetByPrice(int price)
+        {
+            //shold be an sql statements
+            return getCarsFromDB($"select id, vendor, model, price from Car where price='{price}'");
+        }
+
+        [HttpGet(("orderByPrice/{order}"), Name = "GetAscendDescendByPrice")]
+        public IEnumerable<Car> GetAscendDescendByPrice(string order)
+        {
+            //shold be an sql statements
+            List<Car> cars = new List<Car>();
+            if (order.ToLower() == "ascending")
+                cars = getCarsFromDB($"select id, vendor, model, price from Car ORDER BY price ASC");
+            else if (order.ToLower() == "descending")
+                cars = getCarsFromDB($"select id, vendor, model, price from Car ORDER BY price DESC");
+            return cars;
+        }
+
+        [HttpGet(("byPrice/{price}/{order}"), Name = "GetByPriceAscDesc")]
+        public IEnumerable<Car> GetByPriceAscDesc(int price, string order)
+        {
+            //shold be an sql statements
+            List<Car> cars = new List<Car>();
+            if (order.ToLower() == "ascending")
+                cars = getCarsFromDB($"select id, vendor, model, price from Car where price='{price}' ORDER BY price ASC");
+            else if (order.ToLower() == "descending")
+                cars = getCarsFromDB($"select id, vendor, model, price from Car price='{price}' ORDER BY price DESC");
+            return cars;
+        }
+
         // GET: api/Cars/5
         [HttpGet("{id}", Name = "Get")]
         public Car Get(int id)
