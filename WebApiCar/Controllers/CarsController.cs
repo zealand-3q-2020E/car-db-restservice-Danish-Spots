@@ -77,7 +77,7 @@ namespace WebApiCar.Controllers
             if (order.ToLower() == "ascending")
                 cars = getCarsFromDB($"select id, vendor, model, price from Car where price='{price}' ORDER BY price ASC");
             else if (order.ToLower() == "descending")
-                cars = getCarsFromDB($"select id, vendor, model, price from Car price='{price}' ORDER BY price DESC");
+                cars = getCarsFromDB($"select id, vendor, model, price from Car where price='{price}' ORDER BY price DESC");
             return cars;
         }
 
