@@ -114,9 +114,13 @@ namespace WebApiCar.Controllers
         }
         // PUT: api/Cars/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] Car value)
+        public IActionResult Put(int id, [FromBody] Car value)
         {
-
+            if (id != value.Id)
+                return BadRequest(new {message = "ID mismatch"});
+            string updateCarSql = $"UPDATE Car SET vendor='{value.Vendor}', model='{value.Model}', price='{value.Price}' WHERE id = '{value.Id}'";
+            updateOrDeleteCarFromDB(updateCarSql);
+            return Ok(new {message = "Car Updated"});
         }
 
         // DELETE: api/ApiWithActions/5
@@ -124,15 +128,8 @@ namespace WebApiCar.Controllers
         public void Delete(int id)
         {
             //carList.Remove(Get(id));
-            string insertCarSql = $"DELETE FROM Car WHERE id='{id}'";
-            using (SqlConnection databaseconnection = new SqlConnection(conn))
-            {
-                databaseconnection.Open();
-                using (SqlCommand deleteCommand = new SqlCommand(insertCarSql, databaseconnection))
-                {
-                    deleteCommand.ExecuteNonQuery();
-                }
-            }
+            string deleteCarSql = $"DELETE FROM Car WHERE id='{id}'";
+            updateOrDeleteCarFromDB(deleteCarSql);
         }
 
        int GetId()
@@ -144,18 +141,26 @@ namespace WebApiCar.Controllers
             return 0;
         }
 
+       private void updateOrDeleteCarFromDB(string sqlQuery)
+       {
+           using (SqlConnection databaseConnection = new SqlConnection(conn))
+           {
+               databaseConnection.Open();
+               using (SqlCommand command = new SqlCommand(sqlQuery, databaseConnection))
+               {
+                   command.ExecuteNonQuery();
+               }
+           }
+        }
+
        private List<Car> getCarsFromDB(string sqlQuery)
        {
            var carList = new List<Car>();
-
-           string selectall = sqlQuery;
-
            using (SqlConnection databaseConnection = new SqlConnection(conn))
            {
-               using (SqlCommand selectCommand = new SqlCommand(selectall, databaseConnection))
+               using (SqlCommand selectCommand = new SqlCommand(sqlQuery, databaseConnection))
                {
                    databaseConnection.Open();
-
                    using (SqlDataReader reader = selectCommand.ExecuteReader())
                    {
                        while (reader.Read())
@@ -166,15 +171,11 @@ namespace WebApiCar.Controllers
                            int price = reader.GetInt32(3);
 
                            carList.Add(new Car(id, vendor, model, price));
-
                        }
-
                    }
                }
            }
-
            return carList;
         }
-
     }
 }
